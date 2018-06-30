@@ -14,6 +14,7 @@ namespace C2CSharp
 {
     public class RuleEngine
     {
+
         private IConfigurationRoot config = null;
         private List<Rule> rules = new List<Rule>();
 
@@ -148,6 +149,30 @@ namespace C2CSharp
 
             // remove double newlines
             string result = Regex.Replace(convertedFile, @"[\r\n]{3,}", "\r\n\r\n");
+
+            // remove module descriptors, like static int  OpenDecoder( vlcObjectT * );
+            const string moduleDescs = @"(public[\ \t\r\n]*?|protected[\ \t\r\n]*?|private[\ \t\r\n]*?)?(static[\ \t\r\n]*?)?(const[\ \t\r\n]*?)?(?<type>(((un)?signed)[\ \t\r\n]*?)?((char|wchar_t|void)[\ \t\r\n]*?\*?|short[\ \t\r\n]+int|long[\ \t\r\n]+(int|long)|int|char|short|long))[\ \t\r\n]*(?<name>[a-zA-Z_][a-zA-Z0-9_]*)[\ \t\r\n]*(?<params>\([^\)]*\);)";
+            Regex moduleRegex = new Regex(moduleDescs, RegexOptions.Multiline);
+            if (moduleRegex.IsMatch(result))
+            {
+                result = moduleRegex.Replace(result, "");
+            }
+
+            // fix structs
+            const string structMethods = @"(typedef[\ \t\r\n]*?)?(struct)[\ \t\r\n]*(?:[a-zA-Z0-9_]*)[\ \t\r\n]*(?<body>\{[^\}]*[\ \t\r\n]*\})[\ \t\r\n]*(?<name>[a-zA-Z_][a-zA-Z0-9_]*)[\ \t\r\n]*;";
+            Regex structRegex = new Regex(structMethods, RegexOptions.Multiline);
+            if (structRegex.IsMatch(result))
+            {
+                result = structRegex.Replace(result, "struct ${name} ${body};");
+            }
+
+            // fix const array inits
+            const string arrayInits = @"(?<access>public[\ \t\r\n]*?|protected[\ \t\r\n]*?|private[\ \t\r\n]*?)?(static[\ \t\r\n]*?)?(const[\ \t\r\n]*?)(?<type>(((un)?signed)[\ \t\r\n]*?)?((char|wchar_t|void)[\ \t\r\n]*?\*?|short[\ \t\r\n]+int|long[\ \t\r\n]+(int|long)|int|char|short|long))[\ \t\r\n]*(?<name>[a-zA-Z_][a-zA-Z0-9_]*)[\ \t\r\n]*(?<size>\[\d+\](\[\d+\])?)[\ \t\r\n]*=";
+            Regex arrayInitRegex = new Regex(arrayInits);
+            if (arrayInitRegex.IsMatch(result))
+            {
+                result = arrayInitRegex.Replace(result, "${access} static readonly ${type}${size} ${name} =");
+            }
 
             // save result to file
             var sw = new StreamWriter(destinationFilePath, false);

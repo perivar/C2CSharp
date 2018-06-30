@@ -40,11 +40,6 @@ namespace C2CSharp.Rules
             set;
         }
 
-        protected virtual string ReplaceString(Match match)
-        {
-            return this.GetReplacement();
-        }
-
         public override sealed bool Execute(string strOrigin, out string strOutput, int iRowNumber)
         {
             Regex regex = new Regex(this.Pattern);
@@ -53,7 +48,7 @@ namespace C2CSharp.Rules
 
             if (regex.IsMatch(strOrigin))
             {
-                //result = regex.Replace(strOrigin, new MatchEvaluator(ReplaceString));
+                // use get replacement directly to support captured groups
                 result = regex.Replace(strOrigin, this.GetReplacement());
                 changedFlag = true;
             }
