@@ -163,7 +163,7 @@ namespace C2CSharp
             Regex structRegex = new Regex(structMethods, RegexOptions.Multiline);
             if (structRegex.IsMatch(result))
             {
-                result = structRegex.Replace(result, "struct ${name} ${body};");
+                result = structRegex.Replace(result, "public struct ${name} ${body};");
             }
 
             // fix const array inits
@@ -171,7 +171,7 @@ namespace C2CSharp
             Regex arrayInitRegex = new Regex(arrayInits);
             if (arrayInitRegex.IsMatch(result))
             {
-                result = arrayInitRegex.Replace(result, "${access} static readonly ${type}${size} ${name} =");
+                result = arrayInitRegex.Replace(result, "public static readonly ${type}${size} ${name} =");
             }
 
             // save result to file
